@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="wwwroot\audiochat\**" />
+    <Compile Remove="wwwroot\images\**" />
+    <Compile Remove="wwwroot\videochat\**" />
+    <Content Remove="wwwroot\audiochat\**" />
+    <Content Remove="wwwroot\images\**" />
+    <Content Remove="wwwroot\videochat\**" />
+    <EmbeddedResource Remove="wwwroot\audiochat\**" />
+    <EmbeddedResource Remove="wwwroot\images\**" />
+    <EmbeddedResource Remove="wwwroot\videochat\**" />
+    <None Remove="wwwroot\audiochat\**" />
+    <None Remove="wwwroot\images\**" />
+    <None Remove="wwwroot\videochat\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\css\main.css" />
+    <Content Remove="wwwroot\js\main.js" />
+    <Content Remove="wwwroot\Scripts\adapter.js" />
+    <Content Remove="wwwroot\Scripts\app.js" />
+    <Content Remove="wwwroot\Scripts\audioAdapter.js" />
+    <Content Remove="wwwroot\Scripts\audioApp.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Scripts\adapter.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.0" />
+  </ItemGroup>
+
+</Project>
