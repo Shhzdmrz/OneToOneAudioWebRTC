@@ -3,3 +3,8 @@
 ################################################################################
 
 /.vs/config
+/.vs/WowzaSample/DesignTimeBuild
+/.vs/WowzaSample/v15
+/WowzaSample/bin
+/WowzaSample/obj
+/WowzaSample/Properties/PublishProfiles

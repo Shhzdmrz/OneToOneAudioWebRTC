@@ -5,15 +5,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Scripts\**" />
     <Compile Remove="wwwroot\audiochat\**" />
     <Compile Remove="wwwroot\images\**" />
     <Compile Remove="wwwroot\videochat\**" />
+    <Content Remove="Scripts\**" />
     <Content Remove="wwwroot\audiochat\**" />
     <Content Remove="wwwroot\images\**" />
     <Content Remove="wwwroot\videochat\**" />
+    <EmbeddedResource Remove="Scripts\**" />
     <EmbeddedResource Remove="wwwroot\audiochat\**" />
     <EmbeddedResource Remove="wwwroot\images\**" />
     <EmbeddedResource Remove="wwwroot\videochat\**" />
+    <None Remove="Scripts\**" />
     <None Remove="wwwroot\audiochat\**" />
     <None Remove="wwwroot\images\**" />
     <None Remove="wwwroot\videochat\**" />
@@ -26,10 +30,6 @@
     <Content Remove="wwwroot\Scripts\app.js" />
     <Content Remove="wwwroot\Scripts\audioAdapter.js" />
     <Content Remove="wwwroot\Scripts\audioApp.js" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Scripts\adapter.js" />
   </ItemGroup>
 
   <ItemGroup>

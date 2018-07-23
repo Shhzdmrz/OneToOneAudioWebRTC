@@ -1,6 +1,10 @@
 ﻿//Wowza WebRTC constants
 const WEBRTC_CONSTRAINTS = { audio: true, video: false };
-const ICE_SERVERS = [{}];
+const ICE_SERVERS = [{ url: 'stun:numb.viagenie.ca' },{
+        url: 'turn:numb.viagenie.ca',
+        username: 'shahzad@fms-tech.com',
+        credential: 'P@ssw0rdfms'
+    }];
 //const SERVER_URL = ""; //"wss://localhost.streamlock.net/webrtc-session.json"; set it from the hub connection
 const WOWZA_APPLICATION_NAME = "webrtc";
 //const WOWZA_STREAM_NAME = ""; //"myStream"; set it from the user name 

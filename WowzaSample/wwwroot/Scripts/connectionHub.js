@@ -1,13 +1,16 @@
-﻿var options = { transport: signalR.HttpTransportType.WebSockets, logger: signalR.LogLevel.None };
-var wsconn = new signalR.HubConnectionBuilder().withUrl("/Hubs/WebRTCHub", options).build();
-var isEdge = navigator.userAgent.indexOf('Edge') !== -1 && (!!navigator.msSaveOrOpenBlob || !!navigator.msSaveBlob);
-var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
-var isFirefox = typeof window.InstallTrigger !== 'undefined';
-var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-var isChrome = !!window.chrome && !isOpera;
-var isIE = typeof document !== 'undefined' && !!document.documentMode && !isEdge;
+﻿var hubUrl = document.location.pathname + 'Hubs/WebRTCHub';
+var options = { transport: signalR.HttpTransportType.WebSockets, logger: signalR.LogLevel.None };
+var wsconn = new signalR.HubConnectionBuilder().withUrl(hubUrl, options).build();
 
-var peerConnectionConfig = ICE_SERVERS;
+var peerConnectionConfig = {
+    "iceServers": [
+        { "urls": "stun:stun.l.google.com:19302?transport=udp" },
+        { "urls": "stun:numb.viagenie.ca:3478?transport=udp" },
+        { "urls": "turn:numb.viagenie.ca:3478?transport=udp", "username": "shahzad@fms-tech.com", "credential": "P@ssw0rdfms" },
+        { "urls": "turn:turn-testdrive.cloudapp.net:3478?transport=udp", "username": "redmond", "credential": "redmond123" }
+    ]};
+
+
 var webrtcConstraints = WEBRTC_CONSTRAINTS;
 var streamInfo = { applicationName: WOWZA_APPLICATION_NAME, streamName: WOWZA_STREAM_NAME, sessionId: WOWZA_SESSION_ID_EMPTY };
 
@@ -25,12 +28,13 @@ attachMediaStream = (e) => {
 
 const receivedCandidateSignal = (connection, partnerClientId, candidate) => {
     console.log('WebRTC: adding candidate');
-    console.debug(candidate);
-    connection.addIceCandidate(new RTCIceCandidate(candidate), () => console.log("WebRTC: added candidate successfully"), errorHandler);
+    connection.addIceCandidate(new RTCIceCandidate(candidate), () => console.log("WebRTC: added candidate successfully"), () => console.log("WebRTC: cannot add candidate"));
 }
 
 // Process a newly received SDP signal
 const receivedSdpSignal = (connection, partnerClientId, sdp) => {
+    console.log('connection: ', connection);
+    console.log('sdp', sdp);
     console.log('WebRTC: called receivedSdpSignal');
     console.log('WebRTC: processing sdp signal');
     connection.setRemoteDescription(new RTCSessionDescription(sdp), () => {
@@ -43,13 +47,15 @@ const receivedSdpSignal = (connection, partnerClientId, sdp) => {
                 console.log('WebRTC: create Answer...');
                 connection.setLocalDescription(desc, () => {
                     console.log('WebRTC: set Local Description...');
-                    sendHubSignal(JSON.stringify({ "sdp": connection.localDescription }), partnerClientId);
+                    console.log('connection.localDescription: ', connection.localDescription);
+                    setTimeout(() => {
+                        sendHubSignal(JSON.stringify({ "sdp": connection.localDescription }), partnerClientId);
+                    }, 1000);
                 }, errorHandler);
             }, errorHandler);
-        } else if (connection.remoteDescription.type == "answer") {
-            //localStream.getTracks().forEach(track => connection.addTrack(track, localStream));
+        } else if (connection.remoteDescription.type == "answer") {            
             console.log('WebRTC: remote Description type answer');
-        }
+       }
     }, errorHandler);
 }
 
@@ -60,10 +66,10 @@ const newSignal = (partnerClientId, data) => {
 
     var signal = JSON.parse(data);
     var connection = getConnection(partnerClientId);
-    console.log("signal: ", signal);
+    //console.log("signal: ", signal);
     //console.log("signal: ", signal.sdp || signal.candidate);
     //console.log("partnerClientId: ", partnerClientId);
-    //console.log("connection: ", connection);
+    console.log("connection: ", connection);
 
     // Route signal based on type
     if (signal.sdp) {
@@ -129,16 +135,30 @@ const initiateOffer = (partnerClientId, stream) => {
     //console.log('initiate Offer stream: ', stream);
     //console.log("offer connection: ", connection);
     connection.addStream(stream);// add our audio/video stream
-
     console.log("WebRTC: Added local stream");
-    connection.createOffer((desc) => { // send an offer for a connection
+
+    connection.createOffer().then(offer => {
         console.log('WebRTC: created Offer: ');
-        connection.setLocalDescription(desc, () => {
+        console.log('WebRTC: Description after offer: ', offer);
+        connection.setLocalDescription(offer).then(() => {
             console.log('WebRTC: set Local Description: ');
-            //console.log('connection.localDescription: ', connection.localDescription);
-            sendHubSignal(JSON.stringify({ "sdp": connection.localDescription }), partnerClientId);
-        });
-    }, errorHandler);
+            console.log('connection before sending offer ', connection);
+            setTimeout(() => {
+                sendHubSignal(JSON.stringify({ "sdp": connection.localDescription }), partnerClientId);
+            }, 1000);
+        }).catch(err => console.error('WebRTC: Error while setting local description', err));
+    }).catch(err => console.error('WebRTC: Error while creating offer', err));
+
+    //connection.createOffer((desc) => { // send an offer for a connection
+    //    console.log('WebRTC: created Offer: ');
+    //    console.log('WebRTC: Description after offer: ', JSON.stringify(desc));
+    //    connection.setLocalDescription(desc, () => {
+    //        console.log('WebRTC: Description after setting locally: ', JSON.stringify(desc));
+    //        console.log('WebRTC: set Local Description: ');
+    //        console.log('connection.localDescription: ', JSON.stringify(connection.localDescription));
+    //        sendHubSignal(JSON.stringify({ "sdp": connection.localDescription }), partnerClientId);
+    //    });
+    //}, errorHandler);
 }
 
 const callbackUserMediaSuccess = (stream) => {
@@ -179,6 +199,7 @@ const callbackNegotiationNeeded = (connection, evt) => {
 
 const callbackIceCandidate = (evt, connection, partnerClientId) => {
     console.log("WebRTC: Ice Candidate callback");
+    //console.log("evt.candidate: ", evt.candidate);
     if (evt.candidate) {// Found a new candidate
         console.log('WebRTC: new ICE candidate');
         //console.log("evt.candidate: ", evt.candidate);
@@ -192,17 +213,23 @@ const callbackIceCandidate = (evt, connection, partnerClientId) => {
 const initializeConnection = (partnerClientId) => {
     console.log('WebRTC: Initializing connection...');
     //console.log("Received Param for connection: ", partnerClientId);
-
+    
     var connection = new RTCPeerConnection(peerConnectionConfig);
 
+    //connection.iceConnectionState = evt => console.log("WebRTC: iceConnectionState", evt); //not triggering on edge
+    //connection.iceGatheringState = evt => console.log("WebRTC: iceGatheringState", evt); //not triggering on edge
+    //connection.ondatachannel = evt => console.log("WebRTC: ondatachannel", evt); //not triggering on edge
+    //connection.oniceconnectionstatechange = evt => console.log("WebRTC: oniceconnectionstatechange", evt); //triggering on state change 
+    //connection.onicegatheringstatechange = evt => console.log("WebRTC: onicegatheringstatechange", evt); //triggering on state change 
+    //connection.onsignalingstatechange = evt => console.log("WebRTC: onsignalingstatechange", evt); //triggering on state change 
+    //connection.ontrack = evt => console.log("WebRTC: ontrack", evt);
     connection.onicecandidate = evt => callbackIceCandidate(evt, connection, partnerClientId); // ICE Candidate Callback
-    connection.onnegotiationneeded = evt => callbackNegotiationNeeded(connection, evt); // Negotiation Needed Callback
+    //connection.onnegotiationneeded = evt => callbackNegotiationNeeded(connection, evt); // Negotiation Needed Callback
     connection.onaddstream = evt => callbackAddStream(connection, evt); // Add stream handler callback
     connection.onremovestream = evt => callbackRemoveStream(connection, evt); // Remove stream handler callback
-    //connection.ontrack = evt => callbackAddStream(connection, evt);
 
     connections[partnerClientId] = connection; // Store away the connection based on username
-
+    //console.log(connection);
     return connection;
 }
 
