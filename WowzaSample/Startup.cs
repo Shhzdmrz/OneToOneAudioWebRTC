@@ -26,7 +26,8 @@ namespace WowzaSample
                 builder
                 .AllowAnyMethod()
                 .AllowAnyHeader()
-                .AllowAnyOrigin();
+                .AllowAnyOrigin()
+                .AllowCredentials();//Add it to configure CORS
             }));
 
 
