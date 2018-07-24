@@ -27,8 +27,14 @@ attachMediaStream = (e) => {
 };
 
 const receivedCandidateSignal = (connection, partnerClientId, candidate) => {
-    console.log('WebRTC: adding candidate');
-    connection.addIceCandidate(new RTCIceCandidate(candidate), () => console.log("WebRTC: added candidate successfully"), () => console.log("WebRTC: cannot add candidate"));
+    //console.log('candidate', candidate);
+    //if (candidate) {
+        console.log('WebRTC: adding full candidate');
+        connection.addIceCandidate(new RTCIceCandidate(candidate), () => console.log("WebRTC: added candidate successfully"), () => console.log("WebRTC: cannot add candidate"));
+    //} else {
+    //    console.log('WebRTC: adding null candidate');
+     //   connection.addIceCandidate(null, () => console.log("WebRTC: added null candidate successfully"), () => console.log("WebRTC: cannot add null candidate"));
+    //}
 }
 
 // Process a newly received SDP signal
@@ -48,9 +54,9 @@ const receivedSdpSignal = (connection, partnerClientId, sdp) => {
                 connection.setLocalDescription(desc, () => {
                     console.log('WebRTC: set Local Description...');
                     console.log('connection.localDescription: ', connection.localDescription);
-                    setTimeout(() => {
+                    //setTimeout(() => {
                         sendHubSignal(JSON.stringify({ "sdp": connection.localDescription }), partnerClientId);
-                    }, 1000);
+                    //}, 1000);
                 }, errorHandler);
             }, errorHandler);
         } else if (connection.remoteDescription.type == "answer") {            
@@ -78,6 +84,9 @@ const newSignal = (partnerClientId, data) => {
     } else if (signal.candidate) {
         console.log('WebRTC: candidate signal');
         receivedCandidateSignal(connection, partnerClientId, signal.candidate);
+    } else {
+        console.log('WebRTC: adding null candidate');
+        connection.addIceCandidate(null, () => console.log("WebRTC: added null candidate successfully"), () => console.log("WebRTC: cannot add null candidate"));
     }
 }
 
@@ -207,6 +216,7 @@ const callbackIceCandidate = (evt, connection, partnerClientId) => {
     } else {
         // Null candidate means we are done collecting candidates.
         console.log('WebRTC: ICE candidate gathering complete');
+        sendHubSignal(JSON.stringify({ "candidate": null }), partnerClientId);
     }
 }
 
@@ -395,7 +405,7 @@ wsconn.on('incomingCall', (callingUser) => {
 wsconn.on('receiveSignal', (signalingUser, signal) => {
     //console.log('WebRTC: receive signal ');
     //console.log(signalingUser);
-    //console.log(signal);
+    //console.log('NewSignal', signal);
     newSignal(signalingUser.connectionId, signal);
 });
 
